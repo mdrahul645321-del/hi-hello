@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3ce6"><link rel="manifest" href="hh-manifest.webmanifest"><link rel="apple-touch-icon" href="hihello-192.png">
+<title>Hi Hello</title>
+<style>
+:root{--bg:#f5f2ff;--card:#fff;--tx:#241c3a;--mu:#7a7094;--p:#7c3ce6;--p2:#ff6b9d}
+@media(prefers-color-scheme:dark){:root{--bg:#161225;--card:#231d3b;--tx:#f1ecff;--mu:#a99fc6}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,"Noto Sans Bengali",sans-serif;padding-bottom:78px}
+header{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+header b{font-size:20px;letter-spacing:1px}main{padding:12px;max-width:560px;margin:auto}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px;animation:in .25s}@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.mu{color:var(--mu);font-size:13px}h2{margin:0 0 8px;font-size:16px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px #0002}
+nav button{flex:1;border:0;background:none;color:var(--mu);font-size:11px}nav b{display:block;font-size:20px}nav .on{color:var(--p);font-weight:700}
+input,textarea{font:inherit;padding:10px;border-radius:12px;border:1px solid #7c3ce644;background:var(--bg);color:var(--tx);width:100%;margin:4px 0}
+.btn{font:inherit;padding:10px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;font-weight:700;width:100%;margin:4px 0}
+.sm{width:auto;padding:5px 11px;font-size:13px;margin:0 0 0 5px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #7c3ce618}.row .g{flex:1}
+.av{border-radius:50%;object-fit:cover;background:var(--p);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.m{max-width:78%;padding:8px 12px;border-radius:16px;margin:4px 0;word-wrap:break-word;background:var(--card)}.m.me{margin-left:auto;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
+.m img{max-width:100%;border-radius:10px;display:block}.m small{opacity:.7;font-size:10px;display:block}
+.bar{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));background:var(--card);padding:8px;display:flex;gap:6px;align-items:center}.bar input{margin:0}
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+</style></head><body>
+<header><b>Hi Hello 👋</b><span id="who" class="mu" style="color:#fff"></span></header>
+<main id="m"></main><nav id="nav"></nav>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut}from"https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import*as fs from"https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+const{getFirestore,collection,doc,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limitToLast,getDoc,arrayUnion}=fs;
+const app=initializeApp({apiKey:"AIzaSyBHePNKo0atRfZteXdwDCKCdfr3iVMrt9c",authDomain:"hi-hello-470dd.firebaseapp.com",projectId:"hi-hello-470dd",storageBucket:"hi-hello-470dd.firebasestorage.app",messagingSenderId:"574358076434",appId:"1:574358076434:web:6bb4feeea8f9e8a8d6eccb"});
+const auth=getAuth(app),db=getFirestore(app),W=window,$=s=>document.querySelector(s),dom='@hihello.app';
+const S={uid:null,me:null,users:[],set:null,tab:'chat',peer:null,msgs:[],subs:[],mode:'in',mods:[],loaded:{},tabs:[],hooks:{chatHeader:[]}};
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const run=async f=>{try{await f()}catch(e){alert('কাজ হয়নি: '+(e.code||e.message))}};
+const user=id=>S.users.find(u=>u.id===id)||{},cid=(a,b)=>[a,b].sort().join('_'),isA=()=>S.set&&S.set.adminUid===S.uid;
+const av=(u,s=40)=>u&&u.photo?`<img class="av" src="${u.photo}" style="width:${s}px;height:${s}px">`:`<span class="av" style="width:${s}px;height:${s}px;font-size:${s/2.2}px">${esc(((u&&u.name)||'?')[0])}</span>`;
+const fmt=t=>new Date(t).toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'});
+async function shrink(f,max,q,sq){const im=await createImageBitmap(f);let w=im.width,h=im.height,sx=0,sy=0;if(sq){const m=Math.min(w,h);sx=(w-m)/2;sy=(h-m)/2;w=h=m}
+const k=Math.min(1,max/Math.max(w,h)),c=document.createElement('canvas');c.width=w*k;c.height=h*k;c.getContext('2d').drawImage(im,sx,sy,w,h,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
+const ctx={app,auth,db,fs,S,$,esc,run,av,user,cid,hooks:S.hooks,render:()=>render(),addTab:(id,icon,label,fn)=>{S.tabs.push({id,icon,label,fn})}};
+function loadMod(n){if(S.loaded[n]||!/^mod-[a-z0-9-]+\.js$/.test(n))return;S.loaded[n]=1;import('./'+n).then(m=>m.default&&m.default(ctx)).then(()=>render()).catch(e=>console.log('mod',n,e))}
+function loginView(){$('#nav').innerHTML='';$('#who').textContent='';const up=S.mode==='up';
+$('#m').innerHTML=`<div class="card"><h2>${up?'নতুন অ্যাকাউন্ট':'লগইন'}</h2>${up?'<input id="n" placeholder="তোমার নাম">':'<input id="i" placeholder="তোমার আইডি (যেমন HH123456)" autocapitalize="off">'}<input id="p" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="btn" onclick="auth_()">${up?'যোগ দাও':'ঢোকো'}</button><p class="mu" style="text-align:center" onclick="S.mode=S.mode==='in'?'up':'in';render()">${up?'আগে থেকে আছো? লগইন':'নতুন? অ্যাকাউন্ট বানাও (ইমেইল লাগবে না)'}</p></div>`}
+W.S=S;W.render=()=>render();
+W.auth_=()=>run(async()=>{const p=$('#p').value;
+if(S.mode==='in'){await signInWithEmailAndPassword(auth,$('#i').value.trim().toLowerCase()+dom,p);return}
+const n=$('#n').value.trim();if(!n)return alert('নাম দাও');if(p.length<6)return alert('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর');
+let hid,c;for(let t=0;t<6&&!c;t++){hid='hh'+Math.floor(1e5+Math.random()*9e5);try{c=await createUserWithEmailAndPassword(auth,hid+dom,p)}catch(e){if(e.code!=='auth/email-already-in-use')throw e}}
+if(!c)throw new Error('আবার চেষ্টা করো');
+const first=!(await getDoc(doc(db,'settings','main'))).exists();
+if(first)await setDoc(doc(db,'settings','main'),{adminUid:c.user.uid});
+await setDoc(doc(db,'users',c.user.uid),{name:n,hid:hid.toUpperCase(),photo:'',approved:first,ts:Date.now()});
+alert('তোমার আইডি: '+hid.toUpperCase()+'\nএটা লিখে রাখো, লগইনে লাগবে।')});
+const V={
+chat(){if(S.peer)return chatView();const L=S.users.filter(u=>u.approved&&u.id!==S.uid);
+return `<input id="q" placeholder="🔍 নাম বা আইডি খোঁজো" oninput="flt()"><div class="card">${L.map(u=>`<div class="row r" data-s="${esc((u.name+' '+u.hid).toLowerCase())}" onclick="openChat('${u.id}')">${av(u,44)}<div class="g"><b>${esc(u.name)}</b><br><span class="mu">${esc(u.hid)}</span></div></div>`).join('')||'<p class="mu">এখনো কেউ নেই</p>'}</div>`},
+me(){const u=S.me;return `<div class="card" style="text-align:center">${av(u,96)}<h2 style="margin-top:8px">${esc(u.name)}</h2><p class="mu">আইডি: <b>${esc(u.hid)}</b></p><input type="file" id="pf" accept="image/*" onchange="setPhoto()"><input id="pn" value="${esc(u.name)}"><button class="btn" onclick="setName()">নাম সেভ</button><button class="btn" style="background:#888" onclick="signOutX()">লগআউট</button></div>`},
+admin(){const P=S.users.filter(u=>!u.approved),A=S.users.filter(u=>u.approved);
+return `<div class="card"><h2>অনুমতির অপেক্ষায় (${P.length})</h2>${P.map(u=>`<div class="row">${av(u)}<div class="g"><b>${esc(u.name)}</b><br><span class="mu">${esc(u.hid)}</span></div><button class="btn sm" onclick="appr('${u.id}',true)">✔ অনুমতি</button><button class="btn sm" onclick="rej('${u.id}')">✕</button></div>`).join('')||'<p class="mu">কেউ নেই</p>'}</div>
+<div class="card"><h2>সদস্য (${A.length})</h2>${A.map(u=>`<div class="row">${av(u)}<div class="g">${esc(u.name)} <span class="mu">${esc(u.hid)}</span></div>${u.id!==S.uid?`<button class="btn sm" onclick="appr('${u.id}',false)">বন্ধ</button>`:''}</div>`).join('')}</div>
+<div class="card"><h2>নতুন ফিচার (মডিউল)</h2><p class="mu">চালু: ${S.mods.map(esc).join(', ')||'কিছু না'}</p><input id="mn" placeholder="ফাইলের নাম, যেমন mod-call.js"><button class="btn" onclick="addMod()">চালু করো</button></div>`}};
+function chatView(){const u=user(S.peer);return `<div class="ch"><button class="btn sm" onclick="closeChat()">←</button>${av(u,40)}<b class="g" style="flex:1">${esc(u.name)}</b>${S.hooks.chatHeader.map(f=>f(S.peer)).join('')}</div><div id="ml" data-p="${S.peer}"></div><div style="height:60px"></div><div class="bar"><label style="font-size:22px">📷<input type="file" id="mf" accept="image/*" hidden onchange="sendImg()"></label><input id="mt" placeholder="মেসেজ লেখো..." onkeydown="if(event.key==='Enter')send()"><button class="btn sm" onclick="send()">➤</button></div>`}
+function fillMsgs(){const el=$('#ml');if(!el)return;el.innerHTML=S.msgs.map(m=>`<div class="m ${m.from===S.uid?'me':''}">${m.img?`<img src="${m.img}">`:''}${m.text?esc(m.text):''}<small>${fmt(m.ts)}</small></div>`).join('');W.scrollTo(0,document.body.scrollHeight)}
+function render(){if(!S.uid)return loginView();
+if(!S.me){$('#m').innerHTML='<div class="card mu">লোড হচ্ছে...</div>';return}
+if(!S.me.approved){$('#nav').innerHTML='';$('#who').textContent=S.me.name;$('#m').innerHTML=`<div class="card" style="text-align:center"><h2>⏳ অনুমতির অপেক্ষায়</h2><p>তোমার আইডি: <b>${esc(S.me.hid)}</b></p><p class="mu">অ্যাডমিন অনুমতি দিলে অ্যাপ চালু হবে। পরে আবার খুলে দেখো।</p><button class="btn" style="background:#888" onclick="signOutX()">লগআউট</button></div>`;return}
+$('#who').textContent=S.me.name+(isA()?' · অ্যাডমিন':'');
+const T=[['chat','💬','চ্যাট'],['me','🙂','প্রোফাইল']];if(isA())T.push(['admin','🛡️','অ্যাডমিন']);S.tabs.forEach(t=>T.push([t.id,t.icon,t.label]));
+$('#nav').innerHTML=T.map(t=>`<button class="${S.tab===t[0]?'on':''}" onclick="S.tab='${t[0]}';render()"><b>${t[1]}</b>${t[2]}</button>`).join('');
+if(S.tab==='chat'&&S.peer&&$('#ml')&&$('#ml').dataset.p===S.peer){fillMsgs();return}
+const mt=S.tabs.find(t=>t.id===S.tab);$('#m').innerHTML=mt?mt.fn():(V[S.tab]||V.chat)();if(S.peer&&S.tab==='chat')fillMsgs()}
+W.flt=()=>{const q=$('#q').value.toLowerCase();document.querySelectorAll('.r').forEach(r=>r.style.display=r.dataset.s.includes(q)?'':'none')};
+W.openChat=id=>{S.peer=id;S.msgs=[];S.csub&&S.csub();S.csub=onSnapshot(query(collection(db,'chats',cid(S.uid,id),'msgs'),orderBy('ts'),limitToLast(100)),s=>{S.msgs=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.log(e.code));render()};
+W.closeChat=()=>{S.csub&&S.csub();S.csub=null;S.peer=null;render()};
+W.send=()=>run(async()=>{const t=$('#mt').value.trim();if(!t)return;$('#mt').value='';await addDoc(collection(db,'chats',cid(S.uid,S.peer),'msgs'),{from:S.uid,text:t,ts:Date.now()})});
+W.sendImg=()=>run(async()=>{const f=$('#mf').files[0];if(!f)return;await addDoc(collection(db,'chats',cid(S.uid,S.peer),'msgs'),{from:S.uid,img:await shrink(f,720,.6,false),ts:Date.now()})});
+W.setPhoto=()=>run(async()=>{const f=$('#pf').files[0];if(f)await updateDoc(doc(db,'users',S.uid),{photo:await shrink(f,160,.7,true)})});
+W.setName=()=>run(async()=>{const n=$('#pn').value.trim();if(n)await updateDoc(doc(db,'users',S.uid),{name:n})});
+W.appr=(id,v)=>run(()=>updateDoc(doc(db,'users',id),{approved:v}));
+W.rej=id=>confirm('বাদ দেবে?')&&run(()=>deleteDoc(doc(db,'users',id)));
+W.addMod=()=>run(async()=>{const n=$('#mn').value.trim();if(!/^mod-[a-z0-9-]+\.js$/.test(n))return alert('নাম হতে হবে mod-xxx.js ধরনের');await setDoc(doc(db,'config','modules'),{list:arrayUnion(n)},{merge:true})});
+W.signOutX=()=>signOut(auth);
+function startApproved(){if(S.started===S.uid)return;S.started=S.uid;
+S.subs.push(onSnapshot(collection(db,'users'),s=>{S.users=s.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{}));
+S.subs.push(onSnapshot(doc(db,'config','modules'),s=>{S.mods=(s.exists()&&s.data().list)||[];S.mods.forEach(loadMod);render()},()=>{}))}
+onAuthStateChanged(auth,u=>{S.subs.forEach(f=>f());S.subs=[];S.started=null;S.csub&&S.csub();S.csub=null;S.peer=null;S.uid=u?u.uid:null;S.me=null;S.users=[];S.set=null;
+if(!u)return render();
+S.subs.push(onSnapshot(doc(db,'settings','main'),s=>{S.set=s.exists()?s.data():null;render()},()=>{}));
+S.subs.push(onSnapshot(doc(db,'users',u.uid),s=>{S.me=s.exists()?{id:s.id,...s.data()}:null;if(S.me&&S.me.approved)startApproved();render()},()=>{}))});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('hh-sw.js').catch(()=>{});
+render();
+</script></body></html>
